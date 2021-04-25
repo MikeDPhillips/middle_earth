@@ -1,6 +1,9 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+/scraping/ao3_with_author
+/scraping/fulltext
+/scraping/chromedriver
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
