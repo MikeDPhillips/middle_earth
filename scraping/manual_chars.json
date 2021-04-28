@@ -1,0 +1,22 @@
+[
+  {"name": "Adrahil I", "race": "Men", "culture": "Men of Gondor", "gender": "Male", "in_film": false},
+  {"name": "Meldis", "race": "Men", "culture": "Edain", "gender": "Female", "in_film": false},
+  {"name": "Goldilocks Gardner", "race": "Hobbit", "culture": "Shire-hobbits", "gender": "Female", "in_film": false},
+  {"name": "Alfrid Lickspittle", "race": "Men", "culture": "Northmen of Rhovanion", "gender": "Male", "in_film": true},
+  {"name": "Ufedhin", "race": "Elves", "culture": "Sindar", "gender": "Male", "in_film": false},
+  {"name": "Balrog", "race": "Balrog", "culture": "Valaraukar", "gender": "Other", "in_film": true},
+  {"name": "Nazgûl", "race": "Wraith", "culture": "Ringwraith", "gender": "Male", "in_film": true},
+  {"name": "Durin", "race": "Dwarves", "culture": "Durin's Folk", "gender": "Male", "in_film": true},
+  {"name": "Durin", "race": "Dwarves", "culture": "Durin's Folk", "gender": "Male", "in_film": true},
+  {"name": "Ents", "race": "Ents", "culture": "Fangorn", "gender": "Male", "in_film": true},
+  {"name": "Entwives", "race": "Entwives", "culture": "NA", "gender": "Female", "in_film": true},
+  {"name": "Figwit", "race": "Elves", "culture": "Elves of Rivendell", "gender": "Male", "in_film": true},
+  {"name": "Fimbrethil", "race": "Entwives", "culture": "NA", "gender": "Female", "in_film": false},
+  {"name": "Frodo Baggins", "race": "Hobbits", "culture": "Shire-hobbits", "gender": "Male", "in_film": true},
+  {"name": "Ingwë", "race": "Elves", "culture": "Vanyar", "gender": "Male", "in_film": false},
+  {"name": "Kíli", "race": "Dwarves", "culture": "Durin's Folk", "gender": "Male", "in_film": true},
+  {"name": "Barney Butterbur", "race": "Hobbits", "culture": "Bree-hobbits", "gender": "Male", "in_film": true},
+  {"name": "Morwen", "race": "Men", "culture": "Edain", "gender": "Female", "in_film": false},
+  {"name": "Merimac Brandybuck", "race": "Hobbits", "culture": "Shire-hobbits", "gender": "Male", "in_film": false},
+
+]

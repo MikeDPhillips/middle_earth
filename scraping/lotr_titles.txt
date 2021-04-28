@@ -1,3 +1,9 @@
+OC
+OFC
+OMC
+Kíli
+Fíli
+Thranduil's wife
 "I Can't Carry It for You... but I Can Carry You."
 "No More Despair"
 "The Eagles Are Coming!"
@@ -4734,6 +4740,7 @@ Moro Burrows
 Morthond
 Morthond River
 Morwen
+Morwen of Rohan
 Morwen (Gondor)
 Morwen (Sister of Steward Orodreth)
 Morwen (Third Age)
@@ -11078,7 +11085,7 @@ User:ILepidus
 User:IMRAM
 User:IWasTheChosenOne
 User:IZachStudios
-User:I Love Once upon a time 
+User:I Love Once upon a time
 User:I Need Ammo!
 User:I am Gandalf the White
 User:I am Jack's username
@@ -24673,7 +24680,7 @@ User talk:IMRAM
 User talk:IRock71
 User talk:IWasTheChosenOne
 User talk:IZachStudios
-User talk:I Love Once upon a time 
+User talk:I Love Once upon a time
 User talk:I Love Pippin
 User talk:I Need Ammo!
 User talk:I am Gandalf the White

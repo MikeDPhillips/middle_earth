@@ -28,7 +28,8 @@ fix_dict = {'Elvenking Thranduil':'Thranduil',
 with open("genres.txt") as inF:
     genres = [t.strip() for t in inF.readlines()]
 
-
+with open("lotr_titles.txt") as inF:
+    wiki_titles = [t.lower().strip() for t in inF.readlines()]
 
 def parse_files(filename):
     langs = []
@@ -234,18 +235,48 @@ def count_relationships(li, names):
                     key = (r, s)
                     if key in rels:
                         rels[key] += 1
-                    else:
-                        print(f"Key {key} not found.")
+                    #else:
+                    #    print(f"Key {key} not found.")
     return rels
+        
+def make_rel_json(edge_dict, names):
+    nodes = []
+    edges = []
+    
+    for i,name in enumerate(names):
+        new_dict = {}
+        new_dict['id'] = i
+        new_dict['name'] = name
+        nodes.append(new_dict)
+    
+    for k,v in edge_dict.items():
+        if v == 0:
+            continue
+        new_dict = {}
+        new_dict['source'] =k[0]
+        new_dict['target'] = k[1]
+        new_dict['weight'] = str(v)
+        new_dict['source_index'] = names.index(k[0])
+        new_dict['target_index'] = names.index(k[1])
+        edges.append(new_dict)
+        json_out = {}
+        json_out['nodes'] = nodes
+        json_out['edges'] = edges
+        json.dumps(json_out)
+        save_json(json_out, filename = "relationships.json")
+        
+        
+    
+    
         
 def get_all_characters(li):
     chars = []
     for l in li:
-        if l["characters"] == "NA":
+        if l["characters"] == "NA" or len(l["characters"])==0:
             continue
         for r in l["characters"]:
             if r == "":
-                print(l)
+                continue
             chars.append(r)
     return chars
 
@@ -253,27 +284,7 @@ def get_all_characters(li):
 def remove_tags_matching(li, matches):
     return None
 
-def clean_up_ao3(list_to_copy):
-    li = copy.deepcopy(list_to_copy)
-    
-    #remove mention* from all tags
-    tags_to_remove["mention"]
-    
-    #simplify OCs
-    for l in li:
-        for i in range(0, len(l["characters"])):        
-            elem = l["characters"][i]
-            print("Testing " + elem)
-            if re.search(r" oc", elem.lower()):
-                print(str(i )+ "  " + l["characters"][i])
-                li["characters"][i] = "OC"
-                print(str(i )+ "  " + l["characters"][i])
-            
-    changes = {"omc":"OMC",
-               "ofc":"OFC",
-               "oc": "OC"}
-    
-    return None
+
     
 def dict_to_matrix(d, names):
     keys = []
@@ -285,11 +296,11 @@ def dict_to_matrix(d, names):
     return(matrix)
     
     
-filename = "outputS/*txt"
+filename = "/Users/mdp38/outputS/*txt"
 silm = parse_files(filename)
-filename = "output2/*txt"
+filename = "/Users/mdp38/output2/*txt"
 lotr = parse_files(filename)
-filename = "outputHobbit/*txt"
+filename = "/Users/mdp38/outputHobbit/*txt"
 hobbit = parse_files(filename)
 dupes = []
 merged = merge_blurbs(lotr, hobbit, silm, dupes = dupes)
@@ -297,6 +308,10 @@ raw = copy.deepcopy(merged)
 li_merged = list(raw.values())
 
 get_relationships(li_merged)
+li_rs = get_all_relationships(li_merged)
+rs_occ = collections.Counter(li_rs)
+
+
 chars = get_all_characters(li_merged)
 collections.Counter(chars).most_common(20)
 
@@ -314,8 +329,37 @@ glob_pattern = "/Users/mdp38/ao3/fulltext/*.json"
 ao3 = load_jsons(glob_pattern)
 
 
+def split_by_years(li):
+    valid_list = [x for x in li if ','  in x["published"]]
+    years = sorted(set([x["published"].split(',')[1].strip() for x in valid_list]))
+    by_year = {}
+    for y in years:
+        by_year[y] = []
+    for l in valid_list:
+        year = l['published'].split(',')[1].strip()
+        by_year[year].append(l)
+    return by_year
 
-
+def make_character_json(d):
+    output = []
+    keys = sorted(d.keys())[1:]
+    for k in keys:
+        year_dict = {}
+        year_dict['year'] = k
+        v = d[k]
+        year_dict['total_tolkien'] = len(v)
+        year_dict['characters'] = []
+        chars = get_all_characters(v)
+        occ = dict(collections.Counter(chars).most_common())
+        for k2,v2 in occ.items():
+            char_dict = {}
+            char_dict['name'] = k2
+            char_dict['appearances'] = v2
+            year_dict['characters'].append(char_dict)
+        output.append(year_dict)
+    return output
+            
+        
 def fix_characters(li, fix_dict):
     for old, new in fix_dict.items():
         for l in li:
@@ -354,5 +398,210 @@ with open("output2/blurbs_114.txt") as inF:
     data = inF.readlines()
 
 
-        
+
+newp = []
+for p in set(probs):
+    #print(p)
+    result = re.search(r'\(([^)]+)\)', p)
+    if result:
+        print(result[1])
+        newp.append(p)
+
+
+#search wiki titles for characters:
+found = []
+unfound = []  
+idx = []
+string_vals = []
+wiki = [x.lower() for x in wiki_titles]
+for i, line in enumerate(alts):
+    foundMatch = False
+    chars = [x.strip() for x in line.split("|")]
+    found_str = ''
+    for c in chars:
+        if c.lower() in wiki:
+            foundMatch = True
+            found_str += 'T'
+        else: 
+            found_str += 'F'
+            
+    if foundMatch:        
+        found.append(line)
+        idx.append(i)
+        string_vals.append(found_str)
+    else:
+        unfound.append(line)
+
+
+changes = {}
+for line in found:
+    chars = [x.strip() for x in line.split("|")]
     
+    
+
+replacements = {}            
+with open("replacements.txt") as inF:
+   for line in inF.readlines():
+       args = line.split(":")
+       if args[0] in replacements:
+           print("Problem with " + args[0])
+       else:
+           replacements[args[0].strip()] = args[1].strip()
+       
+        
+def clean_up_ao3(list_to_copy):
+    li = copy.deepcopy(list_to_copy)
+    
+    with  open("tags_to_remove.txt") as infile:
+        tags_to_remove = infile.readlines()
+    with open("replacements.txt") as inF:
+       for line in inF.readlines():
+           args = line.split(":")
+           if args[0] in replacements:
+               print("Problem with " + args[0])
+           else:
+               replacements[args[0].strip()] = args[1].strip()
+               
+    #simplify OCs
+    for l in li:
+        if l["characters"] == "NA" or len(l["characters"])==0: continue
+        l["characters"] = [re.sub(r"- ?[Cc]haracter", "", x).strip() for x in l["characters"]]
+        #remove parentheses from tags
+        l["characters"] = [re.sub(r"\(([^)]+)\)", "", x).strip() for x in l["characters"]]
+        
+        for bad_value in tags_to_remove:
+            l["characters"] = [x for x in l["characters"] if bad_value.lower() not in x.lower()]
+        for i in range(0, len(l["characters"])):        
+            elem = l["characters"][i].lower()
+            if re.search(r"\boc", elem):
+                l["characters"][i] = "OC"
+            elif re.search(r"\bofc", elem):
+                #print(f"{elem} is now OFC")
+                l["characters"][i] = "OFC"
+            elif re.search(r"\bomc", elem):
+                #print(f"{elem} is now OMC")
+                l["characters"][i] = "OMC"          
+            elif re.search(r"original (\s*|.*)character", elem):
+                if "female" in elem:
+                    l["characters"][i] = "OFC"
+                elif "male" in elem:
+                    l["characters"][i] = "OMC"
+                else:
+                    l["characters"][i] = "OC"
+            for old, new in replacements.items():
+                if old.lower() in elem or new.lower() in elem:
+                    l["characters"][i] = new
+                    #print(f"Replacing {elem} with {new}")
+        #print("After:" + str(len(l["characters"]))  )  
+    return li 
+
+
+
+validated_chars = load_jsons("validated_characters.json")
+final_chars = [x['name'] for x in validated_chars]
+for i in range(0, len(validated_chars)):
+    if validated_chars[i]["gender"] == 'Males' or validated_chars[i]["gender"] == 'male':
+        validated_chars[i]["gender"] = 'Male'
+    elif validated_chars[i]["gender"] =='Other':
+        validated_chars[i]["gender"] = 'NA'
+
+
+race_corrections = { 'Orc':'Orcs',
+                     'Goblin':'Orcs',
+                     'Man':'Men',
+                     'Men':'Men',
+                     'Half':'Elves',
+                     'Elves':'Elves',
+                     'Elven':'Elves',
+                     'Elf':'Elves',
+                     'Unknown':'Unknown',
+                     'Ents':'Ents',
+                     'Dwarf':'Dwarves',
+                     'Hobbit':'Hobbits',
+                     'Eagle':'Great Eagles',
+                     'Balrog':'Balrog',
+                     'Dwarven':'Dwarves',
+                     'Horse':'Horses',
+                     }
+
+for i in range(0, len(validated_chars)):
+    race = validated_chars[i]["race"]
+    
+    if re.search(r'Ent$', race):
+        validated_chars[i]["race"] = 'Ents'
+        continue
+    
+    for old, new in race_corrections.items():
+        if old in race:
+            validated_chars[i]["race"] = new
+    
+    
+culture_corrections = {
+    'Shire':'Shire-hobbits',
+    'Hobbits of Bree':'Bree-hobbits',
+    'Stoor':'Stoor-hobbits',
+    'Took':'Shire-hobbits',
+    'Brandybuck':'Shire-hobbits',
+    'Ñoldor':'Ñoldor (Deep Elves)',
+    'Noldor':'Ñoldor (Deep Elves)',
+    'Tatyar':'Ñoldor (Deep Elves)',
+    'Sindar':'Sindar (Grey Elves)',
+    'Silvan':'Silvan (Wood Elves)',
+    'Vanyar':'Vanyar (Light Elves)',
+    'Minyar':'Vanyar (Light Elves)',
+    'Gondolindrim':'Gondolindrim (Hidden Elves)',
+    'Nandor':'Silvan (Wood Elves)',
+    'Nelyar':'Teleri (Sea Elves)',
+    'Teleri':'Teleri (Sea Elves)',
+    'Falmari':'Teleri (Sea Elves)',
+    'Elves of Rivendell':'Elves of Rivendell',
+    'Rohirri':'Rohirrim',
+    'Rohan':'Rohirrim',
+    'Gondor':'Men of Gondor',
+    'Númenórean':'Númenóreans',
+    'Númenoreans': 'Númenóreans',
+    'Edain':'Edain',
+    'Bëor':'Edain',
+    'Haleth':'Edain',
+    'Durin':"Durin's Folk (Dwarves)",
+    'Firebeards':'Dwarves of Nogrod',
+    'Broadbeams':'Dwarves of Belegost',
+    'Uruk':'Uruk-hai of Isengard',
+    'Moria Orcs':'Orcs of Moria',
+    'Lake-town':'Men of Dale',
+    'Istari':'Istari (Wizards)',
+    'Wizards':'Istari (Wizards)',
+    'Maia':'Maiar',
+    'Balrog':'Maiar',
+    'Valar':'Valar',
+    'Ringwraith', 'Nazgûl',
+    'Easterling':'Easterlings',
+    'Eagles':'Great Eagles',
+    'Galadhrim':'Tree Elves'
+    
+    
+    }
+
+for i in range(0, len(validated_chars)):
+    if 'culture' not in validated_chars[i]: continue
+
+    culture = validated_chars[i]["culture"]
+    
+    if 'Dúnedain' in culture:
+        if 'Gondor'in culture or 'Dol Amroth' in culture:
+            validated_chars[i]["culture"] = 'Dúnedain of Gondor'
+        else:
+            validated_chars[i]["culture"] = 'Dúnedain of the North'
+        
+    # if re.search(r'Ent$', race):
+    #     validated_chars[i]["race"] = 'Ents'
+    #     continue
+    
+    for old, new in culture_corrections.items():
+        if old in culture:
+            validated_chars[i]["culture"] = new
+            
+cultures = [x["culture"] for x in validated_chars if 'culture' in x]
+set(cultures)
+
+collections.Counter(cultures).most_common()
