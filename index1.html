@@ -29,15 +29,13 @@
 <div id="head">
     LOTR Character Frequency
 </div>
+<div id="mySlider"></div>
 <div id="myDataViz"></div>
 
-<div class="row align-items-center">
-    <div class="col-sm-2"><p id="value-time"></p></div>
-    <div class="col-sm"><div id="slider-time"></div></div>
-</div>
 
 
 <script>
+
     // set the dimensions and margins of the graph
     let margin = {top: 100, right: 0, bottom: 0, left: 0},
         width = 600 - margin.left - margin.right,
@@ -45,8 +43,8 @@
         innerRadius = 150,
         outerRadius = Math.min(width, height) / 2;
 
-
     // append the svg object
+   // let svg0 = d3.select ("#mySlider").append("svg").attr
     let svg = d3.select("#myDataViz")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -56,11 +54,18 @@
 
     d3.json("appearances_by_year.json",d3.autoType).then((data)=>{
 
-        console.log(data);
-
         //take the first 50 objects
         data = data.filter(function(d){return d.year==2001})
         console.log(data);
+
+        let d2001 = data[0]
+
+        //Time slider
+
+
+
+
+
         //data=data.filter(function(d,i){return i<50})
 
         //let sum_data = d3.nest().rollup(function(d){return d.appearances}).entries(data)
@@ -95,9 +100,9 @@
         let x = d3.scaleBand()
             .range([0, 2 * Math.PI])    // X axis goes from 0 to 2pi = all around the circle. If I stop at 1Pi, it will be around a half circle
             .align(0)                  // This does nothing
-            .domain(data.map(function(d,i) { return d['characters'][i]['name']; })); // The domain of the X axis is the list of states.
+            .domain(d2001.characters.map(function(d) { return d['name']; })); // The domain of the X axis is the list of states.
 
-        let appMax = d3.max(data,function(d,i){return d['characters'][i]['appearances'];});
+        let appMax = d3.max(d2001.characters,function(d){return (d.appearances);});
         let y = d3.scaleRadial()
             .range([innerRadius, outerRadius])   // Domain will be define later.
             //.domain([0,100])
@@ -122,33 +127,38 @@
 
         tooltip;
 
+       // let a = function(d,i){ return d['characters'][i]['name']}
+        //console.log(a(data, 1))
+
         // Add the bars
         let path = svg.append("g")
             .selectAll("path")
-            .data(data)
+            .data(d2001.characters)
             .enter()
             .append("path")
             .attr("fill", "#CEBEDE")
-            .attr("id",function(d,i){return d['characters'][i]['appearances']})
+            .attr("id",function(d){return d['appearances']})
             .attr("d", d3.arc()     // imagine your doing a part of a donut plot
                 .innerRadius(innerRadius)
                 //.outerRadius(function(d) { return y(d['percent']); })
-                .outerRadius(function(d,i) { return y(d['characters'][i]['appearances']); })
-                .startAngle(function(d,i) { return x(d['characters'][i]['name']); })
-                .endAngle(function(d,i) { return x(d['characters'][i]['name']) + x.bandwidth(); })
+                .outerRadius(function(d) { return y(d['appearances']); })
+                .startAngle(function(d) { return x(d['name']); })
+                .endAngle(function(d) { return x(d['name']) + x.bandwidth(); })
                 .padAngle(0.02)
                 .padRadius(innerRadius))
 
 
-            .on("mouseover", function(d,i) {
-                tooltip.style("visibility", "visible").text(d['characters'][i]['appearances']);
+
+
+            .on("mouseover", function(d) {
+                tooltip.style("visibility", "visible").text(d['appearances']);
                 d3.select(this).attr("fill", "#FDE5BD");
             })
-            .on("mousemove", function(event,d,i){
+            .on("mousemove", function(event,d){
                 let[x, y] = d3.pointer(event);
                 tooltip.style("top", (y+400)+"px")
                     .style("left",(x+300)+"px")
-                    .text(d['characters'][i]['appearances'])})
+                    .text(d['appearances'])})
             .on("mouseout", function(d) {
                 tooltip.style("visibility", "hidden");
                 d3.select(this)
@@ -158,15 +168,15 @@
         // Add the labels
         let label = svg.append("g")
             .selectAll("g")
-            .data(data)
+            .data(d2001.characters)
             .enter()
             .append("g")
             .attr("class","text")
-            .attr("text-anchor", function(d,i) { return (x(d['characters'][i]['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
-            .attr("transform", function(d,i) { return "rotate(" + ((x(d['characters'][i]['name']) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")"+"translate(" + (y(d['characters'][i]['appearances'])+10) + ",0)"; })
+            .attr("text-anchor", function(d) { return (x(d['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
+            .attr("transform", function(d) { return "rotate(" + ((x(d['name']) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")"+"translate(" + (y(d['appearances'])+10) + ",0)"; })
             .append("text")
-            .text(function(d,i){return(d['characters'][i]['name'])})
-            .attr("transform", function(d,i) { return (x(d['characters'][i]['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)"; })
+            .text(function(d){return(d['name'])})
+            .attr("transform", function(d) { return (x(d['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)"; })
             .attr("alignment-baseline", "middle")
 
 
