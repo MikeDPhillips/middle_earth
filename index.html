@@ -50,6 +50,8 @@
        outerRadius = Math.min(width, height) / 2 - 70,
        innerRadius = outerRadius - 30;
 
+   let height2 = 460,width2 = 460;
+
 
     let formatPercent = d3.format(".1%");
 
@@ -63,11 +65,13 @@
 
     let testGraph = d3.select("#testDiv")
         .append("svg")
-        .attr("width",200)
-        .attr("height",200)
+        .attr("id", "treeGraph")
+        .attr("width",width2)
+        .attr("height",height2)
 
 
-   testGraph.append("rect")
+
+   /*testGraph.append("rect")
        .attr("width",200)
        .attr("height",100)
        .attr("stroke","black")
@@ -76,12 +80,7 @@
    testGraph.append("text")
        .attr("class","testText")
        .attr("x",70)
-       .attr("y",30)
-       .style("fill","white")
-
-
-
-
+       .attr("y",30)*/
 
 
    // chordChart.append("circle").attr("r",outerRadius);
@@ -225,12 +224,18 @@
                 return d.source.index === index || d.target.index === index;
             });
             targetRibbons.attr("opacity",1);
+
         }
 
         rings.on("mouseout", function(event,d){
             restoreHighlights();
-            testGraph.select("rect").style("fill","transparent");
-            testGraph.select("text").text(" ")
+           /* testGraph.select("rect").style("fill","transparent");
+            testGraph.select("text").text(" ")*/
+            //testGraph.style("visibility", "hidden");
+
+            d3.selectAll("#treeGraph > *").remove();
+
+
 
         });
 
@@ -240,11 +245,58 @@
                 highlightRings(d.index);
                 highlightRibbons(d.index);
 
-               testGraph.select("rect").style("fill",colorScale(nodes[d.index].name))
-               testGraph.select("text")
-                   .text(nodes[d.index].name)
+                let targets = edges.filter(edge=>edge.source_index===d.index)
+
+            testGraph.style("visibility", "visible");
+
+            //Tree Graph starts here
+            let cluster = d3.cluster().size([height2,width2-100]);
+
+            let root = d3.hierarchy(d, d => {
+                return(edges.filter(edge=>edge.source_index===d.index));
+            });
+
+            cluster(root);
+            console.log(root);
 
 
+
+            testGraph.selectAll('path')
+                .data(root.descendants().slice(1) )
+                .enter()
+                .append('path').attr("d", function(d) {
+                return "M" + d.y + "," + d.x
+                    + "C" + (d.parent.y + 50) + "," + d.x
+                    + " " + (d.parent.y + 150) + "," + d.parent.x // 50 and 150 are coordinates of inflexion, play with it to change links shape
+                    + " " + d.parent.y + "," + d.parent.x;
+            })
+                .style("fill", 'none')
+                .attr("stroke", '#ccc')
+
+            testGraph.selectAll("g")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("transform", function(d) {
+                    return "translate(" + d.y + "," + d.x + ")"
+                })
+                /*.append("circle")
+                .attr("name", d =>  {
+                    console.log(d.data.target)
+                    return(d.data.target) })
+                .attr("r", 7)
+                .style("fill", "#69b3a2")
+                .attr("stroke", "black")
+                .style("stroke-width", 2)*/
+                .append("text")
+                .text(d=>d.data.target)
+
+
+
+
+            /* testGraph.select("text")
+                 .text(nodes[d.index].name)
+                 .style("fill",colorScale(nodes[d.index].name))*/
 
 
             });
