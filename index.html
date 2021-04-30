@@ -14,6 +14,19 @@
             font-size: 12px;
             color:black;
         }
+
+        .container{
+            float:left;
+        }
+
+        .testText
+        {
+            font-family: 'Montserrat',sans-serif;
+            font-weight: 500;
+            font-size: 18px;
+            color:white;
+        }
+
     </style>
 </head>
 <body>
@@ -21,7 +34,9 @@
     Characters Relationship in LOTR Fan Fiction
 </div>
 
-<div id="myDataViz"></div>
+<div class="container" id="myDataViz"></div>
+
+<div class="container" id="testDiv"></div>
 
 <script>
    /* let width = 880,
@@ -45,6 +60,29 @@
         .append("g")
         .attr("id","circle").attr("transform",
             "translate("+width/2+","+height/2+")");
+
+    let testGraph = d3.select("#testDiv")
+        .append("svg")
+        .attr("width",200)
+        .attr("height",200)
+
+
+   testGraph.append("rect")
+       .attr("width",200)
+       .attr("height",100)
+       .attr("stroke","black")
+       .style("fill","transparent")
+
+   testGraph.append("text")
+       .attr("class","testText")
+       .attr("x",70)
+       .attr("y",30)
+       .style("fill","white")
+
+
+
+
+
 
    // chordChart.append("circle").attr("r",outerRadius);
 
@@ -189,11 +227,26 @@
             targetRibbons.attr("opacity",1);
         }
 
-        rings.on("mouseout", restoreHighlights)
-            .on("mouseover", function(event, d) {
+        rings.on("mouseout", function(event,d){
+            restoreHighlights();
+            testGraph.select("rect").style("fill","transparent");
+            testGraph.select("text").text(" ")
+
+        });
+
+
+        rings.on("mouseover", function(event, d) {
                 lowlightAll();
                 highlightRings(d.index);
                 highlightRibbons(d.index);
+
+               testGraph.select("rect").style("fill",colorScale(nodes[d.index].name))
+               testGraph.select("text")
+                   .text(nodes[d.index].name)
+
+
+
+
             });
 
 
