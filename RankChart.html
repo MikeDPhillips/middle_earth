@@ -12,75 +12,59 @@
 <div id="franchiseRank"></div>
 
 <script>
-    let margin = {top: 2, right: 30, bottom: 30, left: 60},
+    let margin = {top: 20, right: 30, bottom: 30, left: 60},
         width = 800
         height= 600
         chartWidth = width - margin.left - margin.right,
         chartHeight = height - margin.top - margin.bottom;
 
-    let myGraph = d3.select("#franchiseRank")
-        .append("svg")
+    let svg = d3.select("#franchiseRank").append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .attr("id", "rankChart")
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-        .append("clipPath")
-        .attr("id", "clip")
-        .append("rect")
-        .attr("width", width)
-        .attr("height", height)
+
+        svg.append("defs")
+            .append("clipPath")
+            .attr("id", "clip")
+            .append("rect")
+            .attr("width", width)
+            .attr("height", height)
 
     d3.csv("franchises_medium.csv",d3.autoType).then((data)=>{
         console.log(data);
         let dateExtent = d3.extent(data, d=>d.Year);
         let countMax = d3.max(data, d=>d.Rank)
         let xScale = d3.scaleLinear().domain(dateExtent).range([margin.left, chartWidth]);
-        let yScale = d3.scaleLinear().domain([1, countMax]).range([margin.top, chartHeight]);
+        let yScale = d3.scaleLinear().domain([1, countMax]).range([margin.bottom, chartHeight]);
         let yAxis = d3.axisLeft(yScale).ticks();
         let xAxis = d3.axisBottom(xScale)
             .tickFormat(d3.format("d"))
             .ticks(20)
 
-        myGraph.append("g")
+        let voronoi = d3.voronoi()
+            .x(d => xScale(d['Year']))
+            .y(d => yScale(d['Rank']))
+            .extent([[-margin.left , -margin.top], [width + margin.right, height + margin.bottom ]]);
+
+        let line = d3.line()
+            .x(d => xScale(d['Year']))
+            .y(d => yScale(d['Rank']))
+                // Uncomment this to use monotone curve
+        //     	.curve(d3.curveMonotoneX);
+
+        svg.append("g")
             .attr("transform","translate(" + margin.left + "," + margin.top + ")")
             .call(yAxis);
 
-        myGraph.append("g")
+        svg.append("g")
             .attr("transform", "translate("+ margin.left + "," + chartHeight + ")")
             .call(xAxis);
 
 
         let nestedData =  d3.group(data, d=>d['Franchise'])
         let keyValue = Array.from(nestedData, ([key, value]) => ({key, value}))
-
-
-        let dataByName = d3.group(data, d=>d['Franchise'])
-        let test  = Array.from(nestedData, ([key, value]) => ({key, value}))
-        console.log(dataByName.get("Harry Potter"));
-        console.log("TEsting")
-        console.log(test);
-        let voronoi = d3.voronoi()
-            .x(d => xScale(d.Year))
-            .y(d => yScale(d.Rank))
-            .extent([[-margin.left , -margin.top], [width + margin.right, height + margin.bottom ]]);
-
-        let voronoiArea = myGraph.append("g")
-            .attr("class", "voronoi");
-
-        let line = d3.line()
-            .x(d => xScale(d.Year))
-            .y(d => yScale(d.Rank))
-
-        voronoiArea.selectAll("path")
-            //.data(voronoi(test.values()))
-            .enter().append("path")
-            .attr("class", "voronoiCell")
-
-
-
-// Uncomment this to use monotone curve
-//     	.curve(d3.curveMonotoneX);
 
         //Choose colors for each franchise
         let names = [...new Set(data.map(d => d.Franchise))];
@@ -89,26 +73,35 @@
             .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffbe33','#a65628','#f781bf','#4ec0c2'])
 
 
-        let focusData = myGraph.append("g")
+        let lines = svg.append("g")
             .selectAll("path")
             .data(keyValue)
             .enter().append("path")
             .attr("class", "rank-line")
-                .attr("class", "line")
-                .attr("clip-path", "url(#clip)")
-                .style("pointer-events", "none")
-                .style("stroke-linejoin", "round")
-                .style("opacity", 0.5)
-                .attr("d", d => {
-                    console.log("in the function")
-                    console.log([d.value['Year'], d.value['Rank']])
-                    line([d.value['Year'], d.value['Rank']]) })
-                .style("stroke", d => colorScale(d.key))
-                .style("opacity", 0.7);
+            .attr("d", function (d) {
+                d.line = this;
+                console.log(d.value)
+                return line(d.value);
+
+            })
+            .attr("clip-path", "url(#clip)")
+            .style("pointer-events", "none")
+            .style("stroke-linejoin", "round")
+            .style("opacity", 0.5)
+            .style("stroke", d => colorScale(d.key))
 
 
 
-        //
+
+        let voronoiArea = myGraph.append("g")
+            .attr("class", "voronoi");
+
+
+
+        voronoiArea.selectAll("path")
+            //.data(voronoi(test.values()))
+            .enter().append("path")
+            .attr("class", "voronoiCell")
 
 
 
