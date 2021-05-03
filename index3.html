@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600" rel="stylesheet">
+    <title>Title</title>
+</head>
+<body>
+
+<div id="myDataViz"></div>
+
+<script>
+    let margin = {top: 2, right: 30, bottom: 30, left: 60},
+        width = 400
+        height= 400
+        chartWidth = 400 - margin.left - margin.right,
+        chartHeight = 400 - margin.top - margin.bottom;
+
+    let myGraph = d3.select("#myDataViz")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+    d3.csv("franchises.csv",d3.autoType).then((data)=>{
+        console.log(data);
+        //console.log(data[0]['Franchise'])
+        //console.log(data[0]['1998'])
+
+
+
+        //console.log(Object.keys(data[0]))
+        //console.log(Object.values(data[0]))
+
+
+
+        let dateExtent = d3.extent(Object.keys(data[0]).slice(0, -1));
+        console.log(dateExtent)
+        let countMax = d3.max(data, d=>d3.max(Object.values(d).slice(0, -1)))
+        console.log(countMax)
+        let dateScale = d3.scaleLinear().domain(dateExtent).range([0, chartWidth]);
+        let countScale = d3.scaleLinear().domain([0, countMax]).range([chartHeight, 0]);
+        let yAxis = d3.axisLeft(countScale).ticks();
+
+
+        const names = data.map( d => d['Franchise']);
+
+        console.log(names)
+
+        //Get all 1998 values
+        const vals = data.map( d => d['1998']);
+
+        //Line function to chart the line graph
+        let line = d3.line()
+            .x(function(d){ return dateScale(+d['Week'])})
+            .y(function(d){ return percentScale(+d['Percent.wk'])})
+
+        console.log(vals)
+        myGraph.append("g")
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+            .call(yAxis);
+
+        myGraph.append("g")
+            .attr("transform", "translate("+ margin.left + "," + chartHeight + ")")
+            .call(d3.axisBottom(dateScale));
+
+
+
+
+
+
+
+    });
+</script>
+
+</body>
+</html>
