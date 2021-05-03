@@ -60,6 +60,7 @@
 
 <div id="myDataViz"></div>
 </div>
+<div class = "caption"> <h2 id="test_caption"></h2></div>
 <script>
 
     // set the dimensions and margins of the graph
@@ -93,8 +94,17 @@
         .tickValues(dataTime)
         .default(new Date(1998, 10, 3))
         .on('onchange', val => {
-            console.log(d3.timeFormat('%Y')(val))
             d3.select('p#value-time').text(d3.timeFormat('%Y')(val));
+            let new_year = d3.select('p#value-time').text();
+            console.log(new_year)
+            // var current = years[parseInt(this.value)],
+            //     year = current.substring(0, 4),
+            //     month = current.substring(5);
+            // d3.select("#month").text(""+month);
+            // d3.select("#year").text(""+year);
+            //var new_data = matrices[current]
+
+            rerender(new_year);
         });
 
     let gTime = d3
@@ -125,8 +135,7 @@
         //take the first 50 objects
         //data = data.filter(function(d){return d.year==2001})
         let year = d3.select('p#value-time').text;
-        console.log(data);
-        console.log(year);
+
 
         let d2001 = data[0]
 
@@ -175,7 +184,7 @@
             //.domain([0,100])
             .domain([0, appMax]); // Domain of Y is from 0 to the max seen in the data
 
-        console.log(appMax)
+        //console.log(appMax)
 
         //purple tool tip!!!!
       let tooltip = d3.select("body")
@@ -251,8 +260,10 @@
 
     });
 
-   function rerender(data) {
-       svg.selectAll(".path")
+   function rerender(newYear) {
+       d3.select('#test_caption').html(newYear)
+
+       //Use this new year to regenerate your data for the chord diagram here
 
    }
 
