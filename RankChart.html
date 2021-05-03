@@ -55,6 +55,11 @@
         let keyValue = Array.from(nestedData, ([key, value]) => ({key, value}))
 
 
+        let dataByName = d3.group(data, d=>d['Franchise'])
+        let test  = Array.from(nestedData, ([key, value]) => ({key, value}))
+        console.log(dataByName.get("Harry Potter"));
+        console.log("TEsting")
+        console.log(test);
         let voronoi = d3.voronoi()
             .x(d => xScale(d.Year))
             .y(d => yScale(d.Rank))
@@ -63,15 +68,17 @@
         let voronoiArea = myGraph.append("g")
             .attr("class", "voronoi");
 
+        let line = d3.line()
+            .x(d => xScale(d.Year))
+            .y(d => yScale(d.Rank))
+
         voronoiArea.selectAll("path")
-            .data(voronoi(keyValue))
+            //.data(voronoi(test.values()))
             .enter().append("path")
             .attr("class", "voronoiCell")
 
 
-        let line = d3.line()
-            .x(d => xScale(d.Year))
-            .y(d => yScale(d.Rank))
+
 // Uncomment this to use monotone curve
 //     	.curve(d3.curveMonotoneX);
 
@@ -82,20 +89,20 @@
             .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffbe33','#a65628','#f781bf','#4ec0c2'])
 
 
-        let focusData = myGraph.selectAll(".focus")
+        let focusData = myGraph.append("g")
+            .selectAll("path")
             .data(keyValue)
-            .enter().append("g")
-            .attr("class", d => {return("focus " + d.key);})
-            .append("path")
+            .enter().append("path")
+            .attr("class", "rank-line")
                 .attr("class", "line")
                 .attr("clip-path", "url(#clip)")
                 .style("pointer-events", "none")
                 .style("stroke-linejoin", "round")
-                .style("opacity", 0)
+                .style("opacity", 0.5)
                 .attr("d", d => {
-                    console.log(d)
-                    console.log(d.value)
-                    line(d.value) })
+                    console.log("in the function")
+                    console.log([d.value['Year'], d.value['Rank']])
+                    line([d.value['Year'], d.value['Rank']]) })
                 .style("stroke", d => colorScale(d.key))
                 .style("opacity", 0.7);
 
