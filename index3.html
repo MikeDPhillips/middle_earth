@@ -78,7 +78,7 @@
         let names = [...new Set(data.map(d => d.Franchise))];
         console.log(names)
         let colorScale = d3.scaleOrdinal().domain(names)
-            .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffbe33','#a65628','#f781bf','#4ec0c2'])
+            .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffbe33','#a65628','#f781bf','#4ec0c2','#ecf235'])
 
 
         let sumstat = d3.group(data, d=>d['Franchise'])
@@ -230,6 +230,8 @@
             .attr('font-size', '11px')
             .text(d=>d.key);*/
 
+
+
         legends.append("circle").attr("cx",10).attr("cy",30).attr("r", 6).style("fill", "#e41a1c")
         legends.append("circle").attr("cx",10).attr("cy",60).attr("r", 6).style("fill", "#377eb8")
         legends.append("circle").attr("cx",10).attr("cy",90).attr("r", 6).style("fill", "#4daf4a")
@@ -239,6 +241,7 @@
         legends.append("circle").attr("cx",10).attr("cy",210).attr("r", 6).style("fill", "#a65628")
         legends.append("circle").attr("cx",10).attr("cy",240).attr("r", 6).style("fill", "#f781bf")
         legends.append("circle").attr("cx",10).attr("cy",270).attr("r", 6).style("fill", "#4ec0c2")
+        legends.append("circle").attr("cx",10).attr("cy",300).attr("r", 6).style("fill", "#ecf235")
         legends.append("text").attr("x", 20).attr("y", 30).text("Harry Potter").style("font-size", "15px").attr("alignment-baseline","middle")
         legends.append("text").attr("x", 20).attr("y", 60).text("Twilight").style("font-size", "15px").attr("alignment-baseline","middle")
         legends.append("text").attr("x", 20).attr("y", 90).text("Star Trek").style("font-size", "15px").attr("alignment-baseline","middle")
@@ -248,7 +251,7 @@
         legends.append("text").attr("x", 20).attr("y", 210).text("Middle Earth Total").style("font-size", "15px").attr("alignment-baseline","middle")
         legends.append("text").attr("x", 20).attr("y", 240).text("The Lord of the Rings").style("font-size", "15px").attr("alignment-baseline","middle")
         legends.append("text").attr("x", 20).attr("y", 270).text("The Hobbit").style("font-size", "15px").attr("alignment-baseline","middle")
-
+        legends.append("text").attr("x", 20).attr("y", 300).text("Pokemon").style("font-size", "15px").attr("alignment-baseline","middle")
 
 
 
