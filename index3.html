@@ -6,14 +6,30 @@
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600" rel="stylesheet">
     <title>Line Chart Raw Count Example</title>
+    <style>
+        .label
+        {
+            font-family: 'Montserrat',sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            color:black;
+        }
+
+        .container{
+            float:left;
+        }
+
+    </style>
 </head>
 <body>
 
-<div id="franchiseLine"></div>
+<div class="container" id="franchiseLine"></div>
+
+<div class="container" id="legendDiv"></div>
 
 <script>
-    let margin = {top: 2, right: 30, bottom: 30, left: 60},
-        width = 800
+    let margin = {top: 2, right: 30, bottom: 30, left: 30},
+        width = 600
         height= 600
         chartWidth = width - margin.left - margin.right,
         chartHeight = height - margin.top - margin.bottom;
@@ -26,12 +42,18 @@
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    let legends = d3.select("#legendDiv")
+        .append("svg")
+        .attr('width', 500)
+        .attr('height',300)
+        .append('g')
+        .attr('transform', 'translate(0, 30)')
 
 
     d3.csv("franchises_small.csv",d3.autoType).then((data)=>{
 
-        const filterValues = ["The Lord of the Rings", "The Hobbit"]
-        data = data.filter( d => {  return filterValues.indexOf(d['Franchise']) !== -1})
+       // const filterValues = ["The Lord of the Rings", "The Hobbit"]
+       // data = data.filter( d => {  return filterValues.indexOf(d['Franchise']) !== -1})
         console.log(data);
         let dateExtent = d3.extent(data, d=>d.Year);
         console.log(dateExtent)
@@ -67,6 +89,24 @@
             .x(function(d){ return dateScale(+d['Year'])})
             .y(function(d){ return countScale(+d['Count'])})
 
+        let tooltip = d3.select("body")
+            .data(keyValue)
+            .append("div")
+            .attr("class","tooltip")
+            .style("position", "absolute")
+            //.style("font-family", "'Open Sans', sans-serif")
+            //.style("font-size", "12px")
+            .style("z-index", "10")
+            .style("background-color", "transparent")
+            //.style("color","black")
+            //.style("border", "solid")
+            //.style("border-color", "#A89ED6")
+            .style("padding", "5px")
+            .style("border-radius", "2px")
+            .style("visibility", "hidden");
+
+        tooltip;
+
 
         console.log(keyValue)
         // Draw the line
@@ -80,6 +120,40 @@
             .attr("stroke", function(d){ return colorScale(d.key) })
             .attr("stroke-width", 1.5)
             .attr("d", d => line(d.value))
+            .on("mouseover", function(d) {
+                tooltip.style("visibility", "visible")
+                    .text(d.key)
+            })
+
+            .on("mousemove", function(event,d) {
+                let [x, y] = d3.pointer(event);
+                tooltip.style("top", (y+30 ) + "px")
+                    .style("left", (x+50 ) + "px")
+                    .text(d.key)
+            })
+
+
+            .on("mouseout", function(d) {
+                    tooltip.style("visibility", "hidden");
+                })
+
+
+
+        //add x-axis label
+        myGraph.append("text")
+            .attr("class","label")
+            .attr("text-anchor", "end")
+            .attr("x", 600)
+            .attr("y", 610)
+            .text("Year");
+
+        //add y-axis label
+        myGraph.append("text")
+            .attr("class","label")
+            .attr("text-anchor", "end")
+            .attr("y", 15)
+            .attr("x", 20)
+            .text("Count");
 
 
 
@@ -131,10 +205,40 @@
         //     .style("fill", function(d){ return colorScale(d.key) })
         //
 
+        let title = legends.append('text')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('fill', 'black')
+            .attr('font-family', 'Helvetica Neue, Arial')
+            .attr('font-weight', 'bold')
+            .attr('font-size', '12px')
+            .text('Names of Fanfictions');
+
+       let entries = legends
+            .data(keyValue)
+            .append('circle')
+            .attr('cx',5) // <-- offset symbol x-position by radius
+            .attr('r', 5)
+            .style('fill', d=>colorScale(d.key));
+
+        let labels = entries.data(keyValue)
+            .append('text')
+            .attr('x',14)
+            .attr('y',4)
+            .attr('fill', 'black')
+            .attr('font-family', 'Helvetica Neue, Arial')
+            .attr('font-size', '11px')
+            .text(d=>d.key);
+
+
 
 
 
     });
+
+
+
+
 </script>
 
 </body>
