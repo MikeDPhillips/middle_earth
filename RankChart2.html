@@ -12,59 +12,51 @@
 <div id="franchiseRank"></div>
 
 <script>
-    let margin = {top: 50, right: 200, bottom: 100, left: 125},
+    let margin = {top: 20, right: 30, bottom: 30, left: 60},
         width = 800
         height= 600
         chartWidth = width - margin.left - margin.right,
         chartHeight = height - margin.top - margin.bottom;
 
     let svg = d3.select("#franchiseRank").append("svg")
-        .attr("width", width)
-        .attr("height", height)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
         .attr("id", "rankChart")
         .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 
         svg.append("defs")
             .append("clipPath")
             .attr("id", "clip")
             .append("rect")
-            .attr("width", chartWidth)
-            .attr("height", chartHeight)
+            .attr("width", width)
+            .attr("height", height)
 
     d3.csv("franchises_medium.csv",d3.autoType).then((data)=>{
         console.log(data);
         let dateExtent = d3.extent(data, d=>d.Year);
         let countMax = d3.max(data, d=>d.Rank)
-        let xScale = d3.scaleLinear().domain(dateExtent).range([0, chartWidth]);
-        let yScale = d3.scaleLinear().domain([0.5, countMax+0.5]).range([0, chartHeight]);
+        let xScale = d3.scaleLinear().domain(dateExtent).range([margin.left, chartWidth]);
+        let yScale = d3.scaleLinear().domain([1, countMax]).range([margin.bottom, chartHeight]);
         let yAxis = d3.axisLeft(yScale).ticks();
         let xAxis = d3.axisBottom(xScale)
             .tickFormat(d3.format("d"))
             .ticks(20)
 
-        svg.append("g")
-            //.attr("transform","translate(" + margin.left + "," + margin.top + ")")
-            .attr("transform", "translate(-10,0)")
-            .call(yAxis);
-
-        svg.append("g")
-            .attr("transform", "translate("+ 0 + "," + (chartHeight + 9) + ")")
-            .call(xAxis);
-
-
-       let voronoi = d3.voronoi()
-            .x(d => xScale(d['Year']))
-            .y(d => yScale(d['Rank']))
-            .extent([[-margin.left , -margin.top], [width + margin.right, height + margin.bottom ]]);
 
         let line = d3.line()
             .x(d => xScale(d['Year']))
             .y(d => yScale(d['Rank']))
                 // Uncomment this to use monotone curve
-          //    	.curve(d3.curveMonotoneX);
+        //     	.curve(d3.curveMonotoneX);
 
+        svg.append("g")
+            .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+            .call(yAxis);
 
+        svg.append("g")
+            .attr("transform", "translate("+ margin.left + "," + chartHeight + ")")
+            .call(xAxis);
 
 
         let nestedData =  d3.group(data, d=>d['Franchise'])
@@ -77,29 +69,31 @@
             .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffbe33','#a65628','#f781bf','#4ec0c2'])
 
 
+        let lines = svg.selectAll(".focus")
+            .data(keyValue)
+            .enter().append("g")
+            .attr("class", function(d) {return "focus " + d.key;})
+            .append("path")
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout)
+            .attr("class", "line")
+            .attr("clip-path", "url(#clip)")
+            .style("pointer-events", "none")
+            .style("stroke-linejoin", "round")
+            .style("opacity", 0)
+            .style("stroke-width", "none")
+            .attr("fill", "none")
+            .attr("d", function (d) {
+                d.line = this;
+                console.log(d.value)
+                return line(d.value);
+            })
+            .style("stroke", d => colorScale(d.key))
+            .transition().duration(750).delay(500)
+            .style("opacity", 0.7);
 
 
-
-        let voronoiGroup = svg.append("g")
-            .attr("class", "voronoi");
-
-
-
-        voronoiGroup.selectAll("path")
-            .data(voronoi(keyValue))
-            .enter().append("path")
-            .attr("d", function(d) {
-                console.log(d.join("L"));
-                return "M" + d.join("L") + "Z"; })
-            .datum(function(d, i) { return d.point; })
-            .attr("class", "voronoiCells")
-            .style("stroke", "#2074A0") //If you want to look at the cells
-            .style("fill", "none")
-            .style("pointer-events", "all")
-            .on("mouseover", showTooltip)
-            .on("mouseout",  removeTooltip);
-
-        //Voronoi mouseover and mouseout functions
+//Voronoi mouseover and mouseout functions
         function mouseover(d) {
             focus.selectAll(".focus").style("opacity", 0.1);
             focus.selectAll("."+d.name).style("opacity", 0.8);
@@ -124,32 +118,24 @@
             });
         };
 
-        let lines = svg.selectAll(".focus")
-            .data(keyValue)
-            .enter().append("g")
-            .attr("class", function(d) {return "focus " + d.name ;})
-            .append("path")
-                .attr("class", "line")
-                .attr("clip-path", "url(#clip)")
-                .style("pointer-events", "none")
-                .style("stroke-linejoin", "round")
-                .style("opacity", 0)
-                .attr("fill", "none")
-                .attr("d", function (d) {
-                    d.line = this;
-                    console.log(d.value)
-                    return line(d.value);
-                })
-            .style("stroke", d => colorScale(d.key))
-            .transition().duration(750).delay(500)
-            .style("opacity", 0.7)
-
-
-
-
-
 
     });
+
+    let popUpName = focus.append("g")
+        .attr("transform", "translate(-100,-100)")
+        .attr("class", "popUpName")
+        .style("pointer-events", "none");
+
+    popUpName.append("circle")
+        .attr("class", "tooltipCircle")
+        .attr("r", 3.5);
+
+    popUpName.append("text")
+        .style("font-size", 12)
+        .attr("class", "titles")
+        .attr("y", -15);
+
+
 </script>
 
 </body>
