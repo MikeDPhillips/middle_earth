@@ -45,7 +45,7 @@
     let legends = d3.select("#legendDiv")
         .append("svg")
         .attr('width', 500)
-        .attr('height',300)
+        .attr('height',400)
         .append('g')
         .attr('transform', 'translate(0, 30)')
 
@@ -214,7 +214,7 @@
             .attr('font-size', '12px')
             .text('Names of Fanfictions');
 
-       let entries = legends
+      /* let entries = legends
             .data(keyValue)
             .append('circle')
             .attr('cx',5) // <-- offset symbol x-position by radius
@@ -228,8 +228,26 @@
             .attr('fill', 'black')
             .attr('font-family', 'Helvetica Neue, Arial')
             .attr('font-size', '11px')
-            .text(d=>d.key);
+            .text(d=>d.key);*/
 
+        legends.append("circle").attr("cx",10).attr("cy",30).attr("r", 6).style("fill", "#e41a1c")
+        legends.append("circle").attr("cx",10).attr("cy",60).attr("r", 6).style("fill", "#377eb8")
+        legends.append("circle").attr("cx",10).attr("cy",90).attr("r", 6).style("fill", "#4daf4a")
+        legends.append("circle").attr("cx",10).attr("cy",120).attr("r", 6).style("fill", "#984ea3")
+        legends.append("circle").attr("cx",10).attr("cy",150).attr("r", 6).style("fill", "#ff7f00")
+        legends.append("circle").attr("cx",10).attr("cy",180).attr("r", 6).style("fill", "#ffbe33")
+        legends.append("circle").attr("cx",10).attr("cy",210).attr("r", 6).style("fill", "#a65628")
+        legends.append("circle").attr("cx",10).attr("cy",240).attr("r", 6).style("fill", "#f781bf")
+        legends.append("circle").attr("cx",10).attr("cy",270).attr("r", 6).style("fill", "#4ec0c2")
+        legends.append("text").attr("x", 20).attr("y", 30).text("Harry Potter").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 60).text("Twilight").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 90).text("Star Trek").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 120).text("Star Wars Universe").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 150).text("Marvel").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 180).text("DC Universe").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 210).text("Middle Earth Total").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 240).text("The Lord of the Rings").style("font-size", "15px").attr("alignment-baseline","middle")
+        legends.append("text").attr("x", 20).attr("y", 270).text("The Hobbit").style("font-size", "15px").attr("alignment-baseline","middle")
 
 
 
