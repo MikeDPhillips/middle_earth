@@ -56,6 +56,7 @@ def parse_blurb(b):
         print ("We have an error title not right!")
         print(b)
     meta["title"] = t_block[0].text
+        
     a_block = [a.text for a in soup.findAll("a", class_="") if a.text != '']
     if  len(a_block) != 1:
         print ("We have an error author not right!")
@@ -64,8 +65,18 @@ def parse_blurb(b):
     
     t_block =  [x.text for  x in soup.findAll("div", class_="z-padtop2") if x.text != '']
     tags = re.split(r"\s-\s", t_block[0])
+    
+    if tags[0] == 'Crossover':
+        tags.pop(0)
+        meta['fandoms'] = [x.strip() for x in tags.pop(0).split('&', 1)]
+    else:
+        pass
+        #print("Check on " + meta["title"])
+        
     params = [x for x in tags if x.find(":") < 0]
     pairs = [x for x in tags if x.find(":") >= 0]
+
+
     if 'Complete' in params:
         params.remove('Complete')
     if 'English' in params:
@@ -86,6 +97,7 @@ def parse_blurb(b):
             
     return meta
  
+
 
 
 def save_json(li, filename = "lotr.json"):
@@ -139,6 +151,9 @@ def merge_blurbs(*lists, dupes):
             k = (b["title"], b["author"])
             if k in md:
                 print(f'Found a dupe for {b["title"]} by {b["author"]}')
+                for f in b['fandoms']:
+                    if f not in md[k]['fandoms']:
+                        md[k]['fandoms'].append(f)
                 dupes.append(b)
             else:
                 md[k] = b
@@ -298,14 +313,30 @@ def dict_to_matrix(d, names):
     
 filename = "/Users/mdp38/outputS/*txt"
 silm = parse_files(filename)
+for s in silm:
+    s['fandoms'] = ['The Silmarillion']
+    
 filename = "/Users/mdp38/output2/*txt"
 lotr = parse_files(filename)
+for s in lotr:
+    s['fandoms'] = ['The Lord of the Rings']
+    
 filename = "/Users/mdp38/outputHobbit/*txt"
 hobbit = parse_files(filename)
+for s in hobbit:
+    s['fandoms'] = ['The Hobbit']
+    
+
+lx_filename = 'outpuCrossoversLOTR/*txt'
+lx = parse_files(lx_filename)
+hx_filename = 'outpuCrossoversHobbit/*txt'
+hx = parse_files(hx_filename)
+
 dupes = []
-merged = merge_blurbs(lotr, hobbit, silm, dupes = dupes)
+merged = merge_blurbs(lotr, hobbit, silm, lx, hx, dupes = dupes)
 raw = copy.deepcopy(merged)
 li_merged = list(raw.values())
+
 
 get_relationships(li_merged)
 li_rs = get_all_relationships(li_merged)
@@ -316,18 +347,19 @@ chars = get_all_characters(li_merged)
 collections.Counter(chars).most_common(20)
 
 
-collections.Counter(get_all_characters(ao3)).most_common(20)
+
+
 all_rs = get_all_relationships(li_merged)
 occurences = collections.Counter(all_rs)
 occurences.most_common(20)
 
+
+
+
+glob_pattern = "ao3_with_author/*.json"
+ao3 = load_jsons(glob_pattern)
 ao3_rs = get_all_relationships(ao3)
 collections.Counter(ao3_rs).most_common(20)
-
-
-glob_pattern = "/Users/mdp38/ao3/fulltext/*.json"
-ao3 = load_jsons(glob_pattern)
-
 
 def split_by_years(li):
     valid_list = [x for x in li if ','  in x["published"]]
@@ -340,6 +372,8 @@ def split_by_years(li):
         by_year[year].append(l)
     return by_year
 
+
+    
 def make_character_json(d):
     output = []
     keys = sorted(d.keys())[1:]
@@ -369,33 +403,10 @@ def fix_characters(li, fix_dict):
     
      
 
-li = test2
-    
-test2 = copy.deepcopy(li_merged)
-fix_characters(li_merged, fix_dict)   
 
 
-langs# =============================================================================  
-#    bio = re.split(r"\breviews", b)[0]
-#    bio2 = [tmp.strip() for tmp in re.split(r"\bby\b", bio)]  
-#    bio =[tmp.strip() for tmp in  b.split("reviews")[0].split("by")]
-
-#     if len(bio2) > 3:
-#         print(b)
-#         count += 1
-#         return None
-#     #summary = b.split("Rated")[0]
-#     #meta = "Rated" + b.split("Rated")[1].strip()
-#     return None
-# =============================================================================
 
 
-filename = "output2/blurbs_114.txt"
-filename = "output2/*txt"
-
-# =============================================================================
-with open("output2/blurbs_114.txt") as inF:
-    data = inF.readlines()
 
 
 
@@ -496,14 +507,152 @@ def clean_up_ao3(list_to_copy):
     return li 
 
 
+def create_fandom_list(li):
+    fandoms = []
+    books = []
+    for idx, a in enumerate(li):
+        new_fandoms = []
+        tolkien= []
+        for f in li[idx]['fandoms']:
+            f = re.sub(r'\(([^)]+)\)', '', f)
+            f = f.split('-')[0].strip()
+            f = f.replace('  ', ' ')
+            f = f.replace('RPF', '').strip()
+            if re.search(r'\s?[Ll]ord [Oo]f', f) or re.search(r'[Ll][Oo][[Tt][[Rr]', f):
+                tolkien.append('The Lord of the Rings')
+            elif re.search(r'\s?[Hh]obbit', f):
+                tolkien.append('The Hobbit')
+            elif 'silma' in f.lower():
+                tolkien.append('The Silmarillion')
+            elif 'middle' in f.lower():
+                tolkien.append('The Silmarillion')
+            elif 'tolkien' in f.lower() or 'thranduil' in f.lower():
+                continue
+            elif 'harry' in f.lower():
+                new_fandoms.append('Harry Potter')
+            elif re.search(r"[Mm]arvel(['\sv]|$)", f):
+                new_fandoms.append('Marvel Universe')
+            elif re.search(r"Thor([\s:]|$)", f):
+                new_fandoms.append("Thor")
+                new_fandoms.append("Marvel Universe")
+            elif 'Captain America' in f:
+                new_fandoms.append("Captain America")
+                new_fandoms.append("Marvel Universe")
+            elif 'Iron Man' in f or 'Ironman' in f:
+                new_fandoms.append("Iron Man")
+                new_fandoms.append("Marvel Universe")  
+            elif 'sherlock' in f.lower():
+                new_fandoms.append('Sherlock Holmes')
+            elif 'buffy' in f.lower():
+                new_fandoms.append('Buffy the Vampire Slayer')
+            elif re.search(r'[Ss]tar\s?[Ww]ars', f):
+                new_fandoms.append('Star Wars Universe')
+            elif re.search('[Ss]tar\s?[Tt]rek', f):
+                new_fandoms.append('Star Trek Universe')
+            elif re.search(r'^[Dd][Cc]', f):
+                new_fandoms.append("DC Universe")
+            elif "Batman" in f:
+                new_fandoms.append("Batman")
+                new_fandoms.append("DC Universe")
+            elif "Superman" in f:
+                new_fandoms.append("Superman")
+                new_fandoms.append("DC Universe")
+            elif "Wonder Woman" in f:
+                new_fandoms.append("Wonder Woman")
+                new_fandoms.append("DC Universe")
+            elif "Aquanman" in f:
+                new_fandoms.append("Aquaman")
+                new_fandoms.append("DC Universe")
+            elif re.search(r"^Flash$", f) or re.search(r"^The Flash$", f):
+                new_fandoms.append("The Flash")
+                new_fandoms.append("DC Universe")
+            elif 'ice and fire' in f.lower() or 'throne' in f.lower():
+                new_fandoms.append("Game of Thrones")
+            elif 'percy' in f.lower():
+                new_fandoms.append('Percy Jackson and the Olympians')
+            elif 'Hunger' in f:
+                new_fandoms.append('The Hunger Games')
+            elif f == 'Twilight':
+                new_fandoms.append('Twilight')
+            elif 'disney' in f.lower():
+                new_fandoms.append('Disney Universe')
+            elif 'shannara' in f.lower():
+                new_fandoms.append('The Shannara Chronicles')
+            elif 'pokemon' in f.lower():
+                new_fandoms.append('Pokemon')
+            elif 'doctor who' in f.lower():
+                new_fandoms.append('Doctor Who')
+            elif 'Actor' in f or 'Real Person' in f or 'thorin' in f or 'Multi' in f:
+                continue
+            elif 'vampire diaries' in f.lower():
+                new_fandoms.append('The Vampire Diaries')
+            elif 'Highlander' in f:
+                new_fandoms.append('Highlander')
+            elif 'Witcher' in f:
+                new_fandoms.append('The Witcher')
+            elif 'avengers' in f.lower():
+                new_fandoms.append('The Avengers')
+                new_fandoms.append('Marvel Universe')
+            elif 'walking dead' in f.lower():
+                new_fandoms.append('The Walking Dead')
+            elif 'stargate' in f.lower():
+                new_fandoms.append('Stargate')
+            else:
+                new_fandoms.append(f)
 
-validated_chars = load_jsons("validated_characters.json")
+        li[idx]['fandoms'] = new_fandoms
+
+        li[idx]['series'] = tolkien
+        #fandoms += list(set(new_fandoms))
+        #books += list(set(tolkien))
+        fandoms += new_fandoms
+        books += tolkien
+        
+    return fandoms, books
+    #return fandoms + books
+
+        
+def make_fandom_json(d):
+    output = []
+    keys = sorted(d.keys())
+    for k in keys:
+        year_dict = {}
+        year_dict['year'] = k
+        v = d[k]
+        (fandoms, books) = create_fandom_list(v)
+        
+        mc_f = dict(collections.Counter(fandoms).most_common(50))
+        series = dict(collections.Counter(books).most_common())
+        year_dict['fandoms'] = []
+        year_dict['series'] = []
+
+        for k2,v2 in mc_f.items():
+            char_dict = {}
+            char_dict['fandom'] = k2
+            char_dict['count'] = v2
+            year_dict['fandoms'].append(char_dict)
+        for k2, v2 in series.items():
+            char_dict = {}
+            char_dict['series'] = k2
+            char_dict['count'] = v2
+            year_dict['series'].append(char_dict)
+            
+        output.append(year_dict)
+    return output 
+            
+                
+
+validated_chars = load_jsons("validated_characters2.json")
 final_chars = [x['name'] for x in validated_chars]
 for i in range(0, len(validated_chars)):
     if validated_chars[i]["gender"] == 'Males' or validated_chars[i]["gender"] == 'male':
         validated_chars[i]["gender"] = 'Male'
     elif validated_chars[i]["gender"] =='Other':
         validated_chars[i]["gender"] = 'NA'
+
+
+
+ao3 = load_jsons("ao3_with_author/parsed*.json")
 
 
 race_corrections = { 'Orc':'Orcs',
@@ -560,7 +709,6 @@ culture_corrections = {
     'Gondor':'Men of Gondor',
     'Númenórean':'Númenóreans',
     'Númenoreans': 'Númenóreans',
-    'Edain':'Edain',
     'Bëor':'Edain',
     'Haleth':'Edain',
     'Durin':"Durin's Folk (Dwarves)",
@@ -574,12 +722,12 @@ culture_corrections = {
     'Maia':'Maiar',
     'Balrog':'Maiar',
     'Valar':'Valar',
-    'Ringwraith', 'Nazgûl',
+    'Ringwraith':'Nazgûl',
     'Easterling':'Easterlings',
     'Eagles':'Great Eagles',
-    'Galadhrim':'Tree Elves'
-    
-    
+    'Galadhrim':'Tree Elves',
+    'NA':"Unkown",
+    'Edain':'Men of Edain'
     }
 
 for i in range(0, len(validated_chars)):

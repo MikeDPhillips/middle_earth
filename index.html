@@ -1,336 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="https://d3js.org/topojson.v3.min.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600" rel="stylesheet">
-    <title>Title</title>
-    <style>
-        .text
-        {
-            font-family: 'Montserrat',sans-serif;
-            font-weight: 500;
-            font-size: 12px;
-            color:black;
-        }
-
-        .container{
-            float:left;
-        }
-
-        .testText
-        {
-            font-family: 'Montserrat',sans-serif;
-            font-weight: 500;
-            font-size: 18px;
-            color:white;
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <title>Exploring the Fantasy Fiction of Middle Earth</title>
+  <script src="https://d3js.org/d3.v6.js"></script>
+  <script src="d3-simple-slider.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,500,600" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="css/lotr.css" media="screen"/>
 </head>
 <body>
-<div id="head">
-    Characters Relationship in LOTR Fan Fiction
+
+<header class="site-header">
+<div class="flex-container">
+  <div class="logo" style="flex: 25%">
+    <img src="lotr700x700.png" alt="Lord of the Rings Logo"/>
+    </div>
+  <div class="banner" style="flex: 50%">
+    <img src="fellowship_banner.jpg"></img>
+
+  </div>
+  <div class="spacer" style="flex: 10%"></div>
+</div>
+</header>
+<div class = "title">
+  <div id="title_left"></div>
+  <div id="title_block">
+  <h2>Exploring User-Created Middle Earth Fantasy Fiction</h2>
+
+  <h3>CS 5100 Project 2</h3>
+
+  <p> Yidan Xu, Mike Phillips, and Nikolas Lillios </p>
+  </div>
 </div>
 
-<div class="container" id="myDataViz"></div>
 
-<div class="container" id="testDiv"></div>
+
+<div class = "flex-vert">
+  <div class="data_box">
+    <div id="myDataViz"> </div>
+    <div id="testDiv"> </div>
+  </div>
+
+  <div class="transition">
+    Above shows the most popular relationships for fan fictions writers. While below shows the
+    popularity of each character in terms of number of appearances per year. In particular, a shift is noticed
+    in 2013 after the Hobbit prequels began releasing with Dwarves and other characters from that film
+    gaining greatly in popularity.
+
+  </div>
+  </div>
+
+
+  <div class="data_box">
+<div class = slider_graph>
+  <div id="myDataViz_left"> </div>
+<div class="row align-items-center" id="mySlider">
+  <div class="col-sm-2"><p id="value-time"></p></div>
+  <div class="col-sm"><div id="slider-time"></div></div>
+
+</div>
+  </div>
+
+    <div class="tooltip"></div>
+</div>
+
+</div>
+
+
 
 <script>
-   /* let width = 880,
-        height = 880,
-        outerRadius = Math.min(width, height) / 2 - 10,
-        innerRadius = outerRadius - 24;*/
 
-   let margin = {top: 200, right: 150, bottom: 200, left: 150},
-       width = 1000 - margin.left - margin.right,
-       height = 1000 - margin.top - margin.bottom,
-       outerRadius = Math.min(width, height) / 2 - 70,
-       innerRadius = outerRadius - 30;
-
-   let height2 = 460,width2 = 460;
+  // set the dimensions and margins of the graph
+  let margin = {top: 100, right: 0, bottom: 0, left: 0},
+      width = 700 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom,
+      innerRadius = 150,
+      outerRadius = Math.min(width, height) / 2;
 
 
-    let formatPercent = d3.format(".1%");
 
-    let chordChart = d3.select("#myDataViz")
+  let dataTime = d3.range(0, 20).map(function(d) {
+    return new Date(2001 + d, 10, 3);
+  });
+
+  let sliderTime = d3
+      .sliderBottom()
+      .min(d3.min(dataTime))
+      .max(d3.max(dataTime))
+      .step(1000 * 60 * 60 * 24 * 365)
+      .width(500)
+      .tickFormat(d3.timeFormat('%Y'))
+      .tickValues(dataTime)
+      .default(new Date(2008, 10, 3))
+      .on('onchange', val => {
+        d3.select('p#value-time').text(d3.timeFormat('%Y')(val));
+        let new_year = d3.select('p#value-time').text();
+
+        rerender(new_year);
+      });
+
+  let gTime = d3
+      .select("div#slider-time")
+      .append('svg')
+      .attr('width', 800)
+      .attr('height', 200)
+      .append('g')
+      .attr('transform', 'translate(30,30)');
+
+  gTime.call(sliderTime);
+  d3.select('p#value-time').text(d3.timeFormat('%Y')(sliderTime.value()));
+
+
+  d3.select('p#value-time').text(d3.timeFormat('%Y')(sliderTime.value()));
+
+  //gTime.on('input',function input(){update();});
+
+  d3.json("appearances_by_year.json",d3.autoType).then((data)=>{
+
+    window.allData = data;
+
+    let year = d3.select('p#value-time').text();
+    rerender(year);
+
+  });
+
+  function rerender(newYear) {
+    d3.select('#test_caption').html(newYear)
+
+    d3.selectAll("#myDataViz_left > *").remove();
+
+    let pos = newYear - 2001;
+
+    let d2001 = window.allData[pos]
+    console.log(d2001)
+    d2001.characters = d2001.characters.slice(0, 30)
+
+    console.log(d2001)
+    // append the svg object
+    let svg = d3.select("#myDataViz_left")
         .append("svg")
-        .attr("width",width)
-        .attr("height",height)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("id","circle").attr("transform",
-            "translate("+width/2+","+height/2+")");
-
-    let testGraph = d3.select("#testDiv")
-        .append("svg")
-        .attr("id", "treeGraph")
-        .attr("width",width2)
-        .attr("height",height2)
+        .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 2 + margin.top) + ")");
 
 
+    // Scales
+    let x = d3.scaleBand()
+        .range([0, 2 * Math.PI])    // X axis goes from 0 to 2pi = all around the circle. If I stop at 1Pi, it will be around a half circle
+        .align(0)                  // This does nothing
+        .domain(d2001.characters.map(function(d) { return d['name']; })); // The domain of the X axis is the list of states.
 
-   /*testGraph.append("rect")
-       .attr("width",200)
-       .attr("height",100)
-       .attr("stroke","black")
-       .style("fill","transparent")
-
-   testGraph.append("text")
-       .attr("class","testText")
-       .attr("x",70)
-       .attr("y",30)*/
+    let appMax = d3.max(d2001.characters,function(d){return (d.appearances);});
+    let y = d3.scaleRadial()
+        .range([innerRadius, outerRadius])   // Domain will be define later.
+        //.domain([0,100])
+        .domain([0, appMax]); // Domain of Y is from 0 to the max seen in the data
 
 
-   // chordChart.append("circle").attr("r",outerRadius);
+    let tooltip = d3.select(".tooltip")
+        .style("position", "relative")
+        .style("z-index", "10")
+        .style("background-color", "#A7CDFA")
+        .style("color", "#B380BA")
+        .style("border", "solid")
+        .style("border-color", "#A89ED6")
+        .style("padding", "25px")
+        .style("border-radius", "2px")
+        .style("visibility", "hidden");
 
-    //load dataset
-    const drawChord = async () =>{
+    tooltip;
 
-        const colorPalette = ["#48bf8e", "#075c62", "#a1def0", "#5e2a96",
-            "#e775cc", "#f3c5fa", "#9a76af", "#1c4585",
-            "#479abc", "#94ea5b", "#1d6d1f", "#cddb9b",
-            "#604020", "#d48f4d", "#f24219", "#8e1023",
-            "#8c956d", "#2cf52b", "#ff0087", "#e9d737"]
 
-        let colorScale = d3.scaleOrdinal().range(colorPalette)
 
-        const got = await d3.json("relationships1.json");
-        console.log(got);
-
-        let nodes = got.nodes;
-        let edges = got.edges;
-
-        let matrix = [];
-        let connections = {};
-
-        for (let i=0; i<nodes.length; i++) {
-            let row = [];
-            for (let j=0; j<nodes.length; j++) { row.push(0); }
-
-            matrix.push(row);
-            connections[i] = [i]; // everything connected to itself!
-        }
-        console.log(matrix);
-
-        edges.forEach( d => {
-            if (d["weight"] > 0) {
-                matrix[d.source_index][d.target_index] = d["weight"];
-                matrix[d.target_index][d.source_index] = d["weight"];
-
-                connections[d.source_index].push(d.target_index);
-                connections[d.target_index].push(d.source_index);
-            }
-        });
-
-        console.log(matrix);
-        console.log(connections);
-
-        let arc = d3.arc()
+    // Add the bars
+    let path = svg.append("g")
+        .selectAll("path")
+        .data(d2001.characters)
+        .enter()
+        .append("path")
+        .attr("class","path")
+        .attr("fill", "#CEBEDE")
+        .attr("id",function(d){return d['appearances']})
+        .attr("d", d3.arc()     // imagine your doing a part of a donut plot
             .innerRadius(innerRadius)
-            .outerRadius(outerRadius);
-
-        let layout = d3.chord()
-            .padAngle(.04)
-            .sortSubgroups(d3.descending)
-            .sortChords(d3.ascending);
-
-        let ribbon = d3.ribbon()
-            .radius(innerRadius);
-
-        let chords = layout(matrix);
-        console.log(chords);
-
-        //Draw the diagram
-        chordChart.attr("transform",`translate(${width/2.0},${height/2.0})`);
-
-        let ringContainer = chordChart.append("g");
-        let rings = ringContainer.selectAll("g.segment")
-            .data(chords.groups)
-            .join("g")
-            .attr("class","segment");
+            //.outerRadius(function(d) { return y(d['percent']); })
+            .outerRadius(function(d) { return y(d['appearances']); })
+            .startAngle(function(d) { return x(d['name']); })
+            .endAngle(function(d) { return x(d['name']) + x.bandwidth(); })
+            .padAngle(0.02)
+            .padRadius(innerRadius))
 
 
-        rings.append("path")
-            .attr("fill", d => colorScale( nodes[ d.index ].name ))
-            .attr("stroke", d => colorScale( nodes[ d.index ].name ))
-            .attr("d", arc);
-
-        let ribbonContainer = chordChart.append("g");
-        let ribbons = ribbonContainer.selectAll("path.ribbon")
-            .data(chords)
-            .join("path")
-            .attr("class","ribbon")
-            .attr("fill-opacity", 0.5)
-            .attr("stroke", "none")
-            .attr("fill", d => colorScale( nodes[ d.source.index ].name ))
-            .attr("d", ribbon);
-
-
-        chords.groups.forEach( d => {
-            let transform = '';
-            let midpoint = (d.startAngle + d.endAngle) / 2;
-            let rotation = ( midpoint ) * ( 180 / Math.PI ) - 90;
-            transform = transform + ` rotate(${rotation})`;
-            transform = transform + ` translate(${outerRadius}, 0)`;
-            if (rotation > 90) {
-                transform = transform + ' rotate(180)';
-                // Notice text anchor issue that also first
-                d.anchor = "end";
+        //purple tooltip
+        .on("mouseover", function(d) {
+          tooltip.style("visibility", "visible").text(d['appearances']);
+          d3.select(this).attr("fill", "#CEBEDE");
+        })
+        .on("mousemove", function(event,d){
+          let[x, y] = d3.pointer(event);
+          tooltip.style("top", (10)+"px")
+              .style("left",(-600)+"px")
+              .text(d['appearances'])})
+        .on("mouseout", function(d) {
+              tooltip.style("visibility", "hidden");
+              d3.select(this)
+                  .attr("fill", "#CEBEDE")
             }
-            d.trans = transform;
-        });
+        );
 
-       rings.append("text")
-            .attr("transform", d => d.trans)
-            .attr("class","text")
-            .text(d => nodes[ d.index ].name )
-            .attr("x",-1)
-            .attr("dy",".5em")
-            .attr("text-anchor", d => d.anchor);
+    // Add the labels
+    let label = svg.append("g")
+        .selectAll("g")
+        .data(d2001.characters)
+        .enter()
+        .append("g")
+        .attr("class","text")
+        .attr("text-anchor", function(d) { return (x(d['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "end" : "start"; })
+        .attr("transform", function(d) { return "rotate(" + ((x(d['name']) + x.bandwidth() / 2) * 180 / Math.PI - 90) + ")"+"translate(" + (y(d['appearances'])+10) + ",0)"; })
+        .append("text")
+        .text(function(d){return(d['name'])})
+        .attr("transform", function(d) { return (x(d['name']) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)"; })
+        .attr("alignment-baseline", "middle")
 
-        /*chordChart.selectAll("text")
-            .data(chords.groups)
-            .append("text")
-            .attr("dx", 4)
-            .attr("dy", ".35em")
-            .append("textPath")
-            .attr("class", "label")
-            .attr("xlink:href", function(d) { return "#group" + d.index; })
-            .text(d => nodes[ d.index ].name )
-            //.text(function(d) { return "Arc " + d.index; })
-            .style("fill", function(d) { return d3.rgb(fill(d.index)).darker(2); });*/
+  }
 
-
-        function restoreHighlights() {
-            rings.attr("opacity", 1);   // both text and ring
-            ribbons.attr("opacity", 1);
-        }
-        function lowlightAll() {
-            rings.attr("opacity", 0.2); // both text and ring
-            ribbons.attr("opacity", 0.2);
-        }
-
-        function highlightRings(index) {
-            let targetSegments = rings.filter( d => {
-                return connections[d.index].includes(index);
-            });
-            targetSegments.attr("opacity",1);
-        }
-
-        function highlightRibbons(index) {
-            let targetRibbons = ribbons.filter( d => {
-                return d.source.index === index || d.target.index === index;
-            });
-            targetRibbons.attr("opacity",1);
-
-        }
-
-        rings.on("mouseout", function(event,d){
-            restoreHighlights();
-           /* testGraph.select("rect").style("fill","transparent");
-            testGraph.select("text").text(" ")*/
-            //testGraph.style("visibility", "hidden");
-
-            d3.selectAll("#treeGraph > *").remove();
+</script>
 
 
 
-        });
+<script>
+
+  let margin2 = {top: 200, right: 150, bottom: 200, left: 150},
+      width2 = 1000 - margin2.left - margin2.right,
+      height2 = 1000 - margin2.top - margin2.bottom,
+      outerRadius2 = Math.min(width2, height2) / 2 - 70,
+      innerRadius2 = outerRadius2 - 30;
+
+  let heightTest = 460,widthTest = 460;
 
 
-        rings.on("mouseover", function(event, d) {
-                lowlightAll();
-                highlightRings(d.index);
-                highlightRibbons(d.index);
+  let formatPercent = d3.format(".1%");
 
-                let targets = edges.filter(edge=>edge.source_index===d.index)
+  let chordChart = d3.select("#myDataViz")
+      .append("svg")
+      .attr("width",width2)
+      .attr("height",height2)
+      .append("g")
+      .attr("id","circle").attr("transform",
+          "translate("+width2/2+","+height2/2+")");
 
-            testGraph.style("visibility", "visible");
-
-            //Tree Graph starts here
-            let cluster = d3.cluster().size([height2,width2-100]);
-
-            let root = d3.hierarchy(d, d => {
-                return(edges.filter(edge=>edge.source_index===d.index));
-            });
-
-            cluster(root);
-            console.log(root);
-
-
-
-            testGraph.selectAll('path')
-                .data(root.descendants().slice(1) )
-                .enter()
-                .append('path').attr("d", function(d) {
-                return "M" + d.y + "," + d.x
-                    + "C" + (d.parent.y + 50) + "," + d.x
-                    + " " + (d.parent.y + 150) + "," + d.parent.x // 50 and 150 are coordinates of inflexion, play with it to change links shape
-                    + " " + d.parent.y + "," + d.parent.x;
-            })
-                .style("fill", 'none')
-                .attr("stroke", '#ccc')
-
-            testGraph.selectAll("g")
-                .data(root.descendants())
-                .enter()
-                .append("g")
-                .attr("transform", function(d) {
-                    return "translate(" + d.y + "," + d.x + ")"
-                })
-                /*.append("circle")
-                .attr("name", d =>  {
-                    console.log(d.data.target)
-                    return(d.data.target) })
-                .attr("r", 7)
-                .style("fill", "#69b3a2")
-                .attr("stroke", "black")
-                .style("stroke-width", 2)*/
-                .append("text")
-                .text(d=>d.data.target)
+  let testGraph = d3.select("#testDiv")
+      .append("svg")
+      .attr("id", "treeGraph")
+      .attr("width",widthTest)
+      .attr("height",heightTest)
 
 
 
 
-            /* testGraph.select("text")
-                 .text(nodes[d.index].name)
-                 .style("fill",colorScale(nodes[d.index].name))*/
+  //load dataset
+  const drawChord = async () =>{
+
+    const colorPalette = ["#48bf8e", "#075c62", "#a1def0", "#5e2a96",
+      "#e775cc", "#f3c5fa", "#9a76af", "#1c4585",
+      "#479abc", "#94ea5b", "#1d6d1f", "#cddb9b",
+      "#604020", "#d48f4d", "#f24219", "#8e1023",
+      "#8c956d", "#2cf52b", "#ff0087", "#e9d737"]
+
+    let colorScale = d3.scaleOrdinal().range(colorPalette)
+
+    const got = await d3.json("relationships1.json");
+    console.log(got);
+
+    let nodes = got.nodes;
+    let edges = got.edges;
+
+    let matrix = [];
+    let connections = {};
+
+    for (let i=0; i<nodes.length; i++) {
+      let row = [];
+      for (let j=0; j<nodes.length; j++) { row.push(0); }
+
+      matrix.push(row);
+      connections[i] = [i]; // everything connected to itself!
+    }
 
 
-            });
+    edges.forEach( d => {
+      if (d["weight"] > 0) {
+        matrix[d.source_index][d.target_index] = d["weight"];
+        matrix[d.target_index][d.source_index] = d["weight"];
+
+        connections[d.source_index].push(d.target_index);
+        connections[d.target_index].push(d.source_index);
+      }
+    });
+
+    let arc = d3.arc()
+        .innerRadius(innerRadius2)
+        .outerRadius(outerRadius2);
+
+    let layout = d3.chord()
+        .padAngle(.04)
+        .sortSubgroups(d3.descending)
+        .sortChords(d3.ascending);
+
+    let ribbon = d3.ribbon()
+        .radius(innerRadius2);
+
+    let chords = layout(matrix);
+    console.log(chords);
+
+    //Draw the diagram
+    chordChart.attr("transform",`translate(${width2/2.0},${height2/2.0})`);
+
+    let ringContainer = chordChart.append("g");
+    let rings = ringContainer.selectAll("g.segment")
+        .data(chords.groups)
+        .join("g")
+        .attr("class","segment");
 
 
-        let getGradID = chord => `linkGrad-${chord.source.index}-${chord.target.index}`;
+    rings.append("path")
+        .attr("fill", d => colorScale( nodes[ d.index ].name ))
+        .attr("stroke", d => colorScale( nodes[ d.index ].name ))
+        .attr("d", arc);
 
-        var grads = d3.select("#chord").append("defs")
-            .selectAll("linearGradient")
-            .data(chords)
-            .join("linearGradient")
-            .attr("id", getGradID)
-            .attr("gradientUnits", "userSpaceOnUse")  // use the coordinate system of whatever is being filled
-            .attr("x1", d => radius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
-            .attr("y1", d => radius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
-            .attr("x2", d => radius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
-            .attr("y2", d => radius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
-        grads.append("stop")
-            .attr("offset", "0%")
-            .attr("stop-color", d => colorScale(nodes[ d.source.index ].name) )
-        grads.append("stop")
-            .attr("offset", "100%")
-            .attr("stop-color", d => colorScale(nodes[ d.target.index ].name) )
+    let ribbonContainer = chordChart.append("g");
+    let ribbons = ribbonContainer.selectAll("path.ribbon")
+        .data(chords)
+        .join("path")
+        .attr("class","ribbon")
+        .attr("fill-opacity", 0.5)
+        .attr("stroke", "none")
+        .attr("fill", d => colorScale( nodes[ d.source.index ].name ))
+        .attr("d", ribbon);
 
 
+    chords.groups.forEach( d => {
+      let transform = '';
+      let midpoint = (d.startAngle + d.endAngle) / 2;
+      let rotation = ( midpoint ) * ( 180 / Math.PI ) - 90;
+      transform = transform + ` rotate(${rotation})`;
+      transform = transform + ` translate(${outerRadius2}, 0)`;
+      if (rotation > 90) {
+        transform = transform + ' rotate(180)';
+        // Notice text anchor issue that also first
+        d.anchor = "end";
+      }
+      d.trans = transform;
+    });
+
+    rings.append("text")
+        .attr("transform", d => d.trans)
+        .attr("class","text")
+        .text(d => nodes[ d.index ].name )
+        .attr("x",-1)
+        .attr("dy",".5em")
+        .attr("text-anchor", d => d.anchor);
+
+
+
+    function restoreHighlights() {
+      rings.attr("opacity", 1);   // both text and ring
+      ribbons.attr("opacity", 1);
+    }
+    function lowlightAll() {
+      rings.attr("opacity", 0.2); // both text and ring
+      ribbons.attr("opacity", 0.2);
+    }
+
+    function highlightRings(index) {
+      let targetSegments = rings.filter( d => {
+        return connections[d.index].includes(index);
+      });
+      targetSegments.attr("opacity",1);
+    }
+
+    function highlightRibbons(index) {
+      let targetRibbons = ribbons.filter( d => {
+        return d.source.index === index || d.target.index === index;
+      });
+      targetRibbons.attr("opacity",1);
 
     }
 
-    drawChord();
+    rings.on("mouseout", function(event,d){
+      restoreHighlights();
+
+      d3.selectAll("#treeGraph > *").remove();
+
+    });
+
+
+    rings.on("mouseover", function(event, d) {
+      lowlightAll();
+      highlightRings(d.index);
+      highlightRibbons(d.index);
+
+      let targets = edges.filter(edge=>edge.source_index===d.index)
+
+      testGraph.style("visibility", "visible");
+
+      //Tree Graph starts here
+      let cluster = d3.cluster().size([heightTest,widthTest-100]);
+
+      let root = d3.hierarchy(d, d => {
+        return(edges.filter(edge=>edge.source_index===d.index));
+      });
+
+      cluster(root);
+
+
+      testGraph.selectAll('path')
+          .data(root.descendants().slice(1) )
+          .enter()
+          .append('path').attr("d", function(d) {
+        return "M" + d.y + "," + d.x
+            + "C" + (d.parent.y + 50) + "," + d.x
+            + " " + (d.parent.y + 150) + "," + d.parent.x // 50 and 150 are coordinates of inflexion, play with it to change links shape
+            + " " + d.parent.y + "," + d.parent.x;
+      })
+          .style("fill", 'none')
+          .attr("stroke", '#ccc')
+
+      testGraph.selectAll("g")
+          .data(root.descendants())
+          .enter()
+          .append("g")
+          .attr("transform", function(d) {
+            return "translate(" + d.y + "," + d.x + ")"
+          })
+          .append("text")
+          .text(d=>d.data.target)
+
+      /* testGraph.select("text")
+           .text(nodes[d.index].name)
+           .style("fill",colorScale(nodes[d.index].name))*/
+
+
+    });
+
+
+    let getGradID = chord => `linkGrad-${chord.source.index}-${chord.target.index}`;
+
+    let grads = d3.select("#chord").append("defs")
+        .selectAll("linearGradient")
+        .data(chords)
+        .join("linearGradient")
+        .attr("id", getGradID)
+        .attr("gradientUnits", "userSpaceOnUse")  // use the coordinate system of whatever is being filled
+        .attr("x1", d => radius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
+        .attr("y1", d => radius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
+        .attr("x2", d => radius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
+        .attr("y2", d => radius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
+    grads.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", d => colorScale(nodes[ d.source.index ].name) )
+    grads.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", d => colorScale(nodes[ d.target.index ].name) )
 
 
 
+  }
 
+  drawChord();
 
 </script>
+
+
+
+
 </body>
 </html>
